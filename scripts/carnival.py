@@ -4,7 +4,7 @@ import rospy
 import numpy
 
 
-# Player class draws just a red dot
+# Player class draws just a blue dot
 class Player:
 	def __init__(self, width, height):
 		self.width = width
@@ -23,6 +23,8 @@ class Player:
 
 # Block to be shooted
 class Block:
+	# if invincible is True, the block cannot be destroyed by bullets
+	# if invisible is True, the block will not be drawn on the screen
 	def __init__(self, pos, invincible=False, invisible=False):
 		block_width = rospy.get_param('~block_width', 40)
 		block_height = rospy.get_param('~block_height', 20)
@@ -67,9 +69,11 @@ class Bullet:
 	def update(self):
 		self.pos[1] -= self.speed
 
+	# if the bullet left the screen
 	def gone(self):
 		return self.pos[1] < self.size[1]
 
+	# test if the bullet hits with a block
 	def hit_test(self, block):
 		m1 = self.pos - self.size / 2
 		m2 = self.pos + self.size / 2
