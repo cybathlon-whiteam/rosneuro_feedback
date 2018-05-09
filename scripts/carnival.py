@@ -3,6 +3,7 @@ import cv2
 import rospy
 import numpy
 import random
+from std_msgs.msg import *
 
 
 # Player class draws just a blue dot
@@ -24,7 +25,7 @@ class Player:
 
 # Block to be shooted
 class Block:
-	def __init__(self, pos):
+	def __init__(self, pos, id):
 		block_width = rospy.get_param('~block_width', 40)
 		block_height = rospy.get_param('~block_height', 20)
 		block_speed = rospy.get_param('~block_speed', 1)
@@ -34,6 +35,7 @@ class Block:
 		self.pos = numpy.float32(pos)
 		self.speed = block_speed
 		self.color = None
+		self.id = id
 
 	def set_color(self, color):
 		if self.color is None:
@@ -87,7 +89,7 @@ class Bullet:
 
 		self.hit = self.hit or ret
 
- 		return ret
+		return ret
 
 
 # Game class
@@ -100,6 +102,7 @@ class Game:
 		self.next_block_time = rospy.Time(0)
 
 		self.player = Player(self.width, self.height)
+		self.cluster_id_source = 0
 		self.blocks = []
 		self.bullets = []
 
@@ -108,6 +111,9 @@ class Game:
 		self.block_interval_min = rospy.get_param('~block_interval_min', 2.0)
 		self.block_interval_max = rospy.get_param('~block_interval_max', 5.0)
 
+		self.input = False
+
+	# if the game is over
 	def is_over(self):
 		return self.over
 
@@ -116,15 +122,16 @@ class Game:
 		time = min(self.block_interval_max, max(self.block_interval_min, time))
 		return rospy.Duration(time)
 
+	# generate a big block consisting of small pieces
 	def generate_block_cluster(self, width, height):
 		block_width = rospy.get_param('~block_width', 40)
 		cluster_size_min = rospy.get_param('~cluster_size_min', 10)
 		cluster_size_max = rospy.get_param('~cluster_size_max', 20)
 		num_blocks = random.randrange(cluster_size_min, cluster_size_max)
-		print 'num_blocks', num_blocks
 
 		pos_x = [width + x * block_width for x in range(num_blocks)]
-		blocks = [Block((x, 30)) for x in pos_x]
+		blocks = [Block((x, 30), self.cluster_id_source) for x in pos_x]
+		self.cluster_id_source += 1
 
 		return blocks
 
@@ -143,6 +150,10 @@ class Game:
 		cv2.imshow('canvas', canvas)
 
 	def update(self):
+		# you can get block states like:
+		block_positions = [x.pos for x in self.blocks]
+		block_ids = [x.id for x in self.blocks]
+
 		# spawn new block
 		if rospy.Time.now() > self.next_block_time:
 			self.next_block_time = rospy.Time.now() + self.time_until_next_block()
@@ -152,6 +163,7 @@ class Game:
 		# update game elements
 		for block in self.blocks:
 			block.update()
+		# erase blocks who left the screen
 		self.blocks = [x for x in self.blocks if x.pos[0] > -100]
 
 		for bullet in self.bullets:
@@ -164,16 +176,22 @@ class Game:
 
 			# show a red block when the player shoots even there is no block
 			if bullet.gone() and not bullet.hit:
-				self.blocks.append(Block((self.width / 2 - 1, 30)))
+				self.blocks.append(Block((self.width / 2 - 1, 30), id=-1))
 				self.blocks[-1].set_color((0, 0, 255))
 		self.bullets = [x for x in self.bullets if not x.gone()]
 
 		# key input
 		key = cv2.waitKey(5)
-		if key == ord(' '):
+		if self.input or key == ord(' '):
 			self.bullets.append(Bullet(self.player.pos))
 		if key == 0x1b:
 			self.over = True
+
+		self.input = False
+
+	# message callback to receive input signals
+	def callback(self, msg):
+		self.input = True
 
 
 # entry point
@@ -181,6 +199,8 @@ def main():
 	rospy.init_node('carnival')
 
 	game = Game()
+	sub = rospy.Subscriber('/shoot', Empty, game.callback)
+
 	while not game.is_over() and not rospy.is_shutdown():
 		game.draw()
 		game.update()
