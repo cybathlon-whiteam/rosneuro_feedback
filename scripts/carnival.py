@@ -2,6 +2,7 @@
 import cv2
 import rospy
 import numpy
+import random
 
 
 # Player class draws just a blue dot
@@ -23,9 +24,7 @@ class Player:
 
 # Block to be shooted
 class Block:
-	# if invincible is True, the block cannot be destroyed by bullets
-	# if invisible is True, the block will not be drawn on the screen
-	def __init__(self, pos, invincible=False, invisible=False):
+	def __init__(self, pos):
 		block_width = rospy.get_param('~block_width', 40)
 		block_height = rospy.get_param('~block_height', 20)
 		block_speed = rospy.get_param('~block_speed', 1)
@@ -34,19 +33,21 @@ class Block:
 		self.size = numpy.int32((block_width, block_height))
 		self.pos = numpy.float32(pos)
 		self.speed = block_speed
-		self.invincible = invincible
-		self.invisible = invisible
+		self.color = None
+
+	def set_color(self, color):
+		if self.color is None:
+			self.color = color
 
 	def draw(self, canvas):
-		if self.invisible:
-			return
-
 		is_missed = self.pos[0] + self.size[0] < self.screen_width / 2
+		if is_missed and self.color is None:
+			self.color = (0, 0, 255)
 
 		pt1 = tuple((self.pos - self.size / 2).astype(numpy.int32))
 		pt2 = tuple((self.pos + self.size / 2).astype(numpy.int32))
 
-		color = (0, 0, 255) if is_missed or self.invincible else (255, 255, 255)
+		color = (255, 255, 255) if self.color is None else self.color
 		cv2.rectangle(canvas, pt1, pt2, color, -1)
 
 	def update(self):
@@ -56,12 +57,14 @@ class Block:
 # Bullet or cannonball
 class Bullet:
 	def __init__(self, pos):
-		self.size = numpy.int32((1, 4000))
+		bullet_width = rospy.get_param('bullet_width', 10)
+		self.size = numpy.int32((bullet_width, 4000))
 		self.pos = numpy.int32((pos[0], pos[1]))
 		self.speed = 500
 		self.hit = False
 
 	def draw(self, canvas):
+		return
 		pt1 = tuple(self.pos - self.size / 2)
 		pt2 = tuple(self.pos + self.size / 2)
 		cv2.rectangle(canvas, pt1, pt2, (0, 255, 128), 2)
@@ -84,10 +87,7 @@ class Bullet:
 
 		self.hit = self.hit or ret
 
-		if block.invincible:
-			return False
-
-		return ret
+ 		return ret
 
 
 # Game class
@@ -118,15 +118,13 @@ class Game:
 
 	def generate_block_cluster(self, width, height):
 		block_width = rospy.get_param('~block_width', 40)
-		num_blocks = rospy.get_param('~cluster_size', 10)
+		cluster_size_min = rospy.get_param('~cluster_size_min', 10)
+		cluster_size_max = rospy.get_param('~cluster_size_max', 20)
+		num_blocks = random.randrange(cluster_size_min, cluster_size_max)
+		print 'num_blocks', num_blocks
 
 		pos_x = [width + x * block_width for x in range(num_blocks)]
 		blocks = [Block((x, 30)) for x in pos_x]
-
-		parent = Block((width, 30), invincible=True, invisible=True)
-		parent.size[0] *= num_blocks
-		parent.pos[0] = width + parent.size[0] / 2
-		blocks.append(parent)
 
 		return blocks
 
@@ -160,11 +158,14 @@ class Game:
 			bullet.update()
 
 			# remove blocks colliding with a bullet
-			self.blocks = [x for x in self.blocks if not bullet.hit_test(x)]
+			for block in self.blocks:
+				if bullet.hit_test(block):
+					block.set_color((0, 255, 0))
 
 			# show a red block when the player shoots even there is no block
 			if bullet.gone() and not bullet.hit:
-				self.blocks.append(Block((self.width / 2, 30), invincible=True))
+				self.blocks.append(Block((self.width / 2 - 1, 30)))
+				self.blocks[-1].set_color((0, 0, 255))
 		self.bullets = [x for x in self.bullets if not x.gone()]
 
 		# key input

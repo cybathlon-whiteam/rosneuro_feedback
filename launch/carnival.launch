@@ -3,19 +3,21 @@
   <node pkg="carnival" type="carnival.py" name="carnival">
     <!-- rendering screen size -->
     <!-- output window size will be (screen_width, screen_height) * screen_scale -->
-    <param name="screen_width" value="480" />
-    <param name="screen_height" value="240" />
-    <param name="screen_scale" value="3" />
+    <param name="screen_width" value="420"/>
+    <param name="screen_height" value="240"/>
+    <param name="screen_scale" value="3"/>
     <!-- interval between block clusters -->
-    <param name="block_interval_mean" value="10.0" />
-    <param name="block_interval_stddev" value="2.0" />
-    <param name="block_interval_min" value="3.0" />
-    <param name="block_interval_max" value="20.0" />
-    <!-- a block cluster consists of \cluster_size block pieces -->
+    <param name="block_interval_mean" value="15.0"/>
+    <param name="block_interval_stddev" value="3.0"/>
+    <param name="block_interval_min" value="10.0"/>
+    <param name="block_interval_max" value="20.0"/>
+    <!-- a block cluster consists of a random number of block pieces (uniform [cluster_size_min, cluster_size_max]) -->
     <!-- and the size of each block piece is (block_width, height) -->
-    <param name="cluster_size" value="10"/>
-    <param name="block_width" value="10"/>
+    <param name="cluster_size_min" value="15"/>
+    <param name="cluster_size_max" value="30"/>
+    <param name="block_width" value="15"/>
     <param name="block_height" value="20"/>
-    <param name="block_speed" value="0.5"/>
+    <param name="block_speed" value="0.75"/>
+    <param name="bullet_width" value="10"/>
   </node>
 </launch>
