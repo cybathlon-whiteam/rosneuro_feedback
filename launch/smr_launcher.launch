@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="protocol" default='0'/>
+    
+  <node name="smr_feedback" pkg="rosneuro_feedback" type="feedback.py" output="screen">
+    <param name="~window_height" value="768"/>
+    <param name="~window_width" value="1024"/>
+    <param name="~window_scale" value="10"/>
+
+    <param name="~protocol_mode" value="$(arg protocol)"/>
+
+    <param name="~n_classes" value="2"/>
+    <param name="~n_trials" value="15"/>
+
+    <param name="~timings_begin" value="3000"/>
+    <param name="~timings_fixation" value="3000"/>
+    <param name="~timings_cue" value="1000"/>
+    <param name="~timings_iti" value="1000"/>
+    <param name="~timings_feedback_min" value="4000"/>
+    <param name="~timings_feedback_max" value="5500"/>
+    <param name="~timings_feedback_update" value="100"/>
+    <param name="~timings_boom" value="1000"/>
+    <param name="~timings_end" value="3000"/>
+  </node>
+</launch>

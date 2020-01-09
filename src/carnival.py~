@@ -3,9 +3,14 @@ import cv2
 import rospy
 import numpy
 import random
+import rospkg
+import os
+import datetime
 from std_msgs.msg import *
 from cnbiros_bci.msg import TidMessage
+from myo_emg.msg import Command
 
+errors = 0
 
 # Event class
 class Event:
@@ -71,9 +76,11 @@ class Block:
 			self.color = color
 
 	def draw(self, canvas):
+		global errors
 		is_missed = self.pos[0] + self.size[0] < self.screen_width / 2
 		if is_missed and self.color is None:
 			self.color = (0, 0, 255)
+			errors += 1
 
 		pt1 = tuple((self.pos - self.size / 2).astype(numpy.int32))
 		pt2 = tuple((self.pos + self.size / 2).astype(numpy.int32))
@@ -123,10 +130,13 @@ class Bullet:
 
 # Game class
 class Game:
-	def __init__(self, event):
+	def __init__(self, event, log):
+		cv2.namedWindow('canvas')
+		cv2.moveWindow('canvas', 0, 0)
 		self.over = False
 		self.end = False
 		self.event = event
+		self.log = log
 		self.width = rospy.get_param('~screen_width', 640)
 		self.height = rospy.get_param('~screen_height', 480)
 		self.scale = rospy.get_param('~screen_scale', 3)
@@ -136,6 +146,7 @@ class Game:
 		self.player = Player(self.width, self.height)
 		self.cluster_id_source = 1
 		self.blocks = []
+		self.blocks_red = []
 		self.bullets = []
 
 		self.block_interval_mean = rospy.get_param('~block_interval_mean', 3.5)
@@ -162,7 +173,8 @@ class Game:
 		block_width = rospy.get_param('~block_width', 40)
 		cluster_size_min = rospy.get_param('~cluster_size_min', 10)
 		cluster_size_max = rospy.get_param('~cluster_size_max', 20)
-		num_blocks = random.randrange(cluster_size_min, cluster_size_max)
+		#num_blocks = random.randrange(cluster_size_min, cluster_size_max)
+		num_blocks = cluster_size_max
 
 		pos_x = [width + x * block_width for x in range(num_blocks)]
 		blocks = [Block((x, 30), self.cluster_id_source) for x in pos_x]
@@ -176,6 +188,9 @@ class Game:
 		for block in self.blocks:
 			block.draw(canvas)
 
+		for block in self.blocks_red:
+			block.draw(canvas)
+
 		for bullet in self.bullets:
 			bullet.draw(canvas)
 
@@ -185,9 +200,16 @@ class Game:
 		cv2.imshow('canvas', canvas)
 
 	def check_end(self):
+		global errors
 		if self.cluster_id_source > self.cluster_id_max:
 			self.end = True
 		if self.end and not len(self.blocks) > 0:
+			Event.duration = rospy.Time.now() - self.start_event_time
+			self.start_event_time = rospy.Time.now()
+			print(Event.duration.to_sec())
+			print(errors)
+			self.log.log_file.write('%d	%f	%d\n' % (Event.incphase, Event.duration.to_sec(), errors))
+			errors = 0
 			print("END")
 			################################
 			self.event.rosidm.header.stamp    = rospy.Time.now()
@@ -196,6 +218,12 @@ class Game:
 			################################
 
 			cv2.waitKey(2000)
+			Event.duration = rospy.Time.now() - self.start_event_time
+			self.start_event_time = rospy.Time.now()
+			print(Event.duration.to_sec())
+			print(errors)
+			self.log.log_file.write('%d	%f	%d' % (Event.end, Event.duration.to_sec(), errors))
+			errors = 0
 			self.over = True
 
 	def update(self):
@@ -203,11 +231,19 @@ class Game:
 		block_positions = [x.pos for x in self.blocks]
 		block_ids = [x.id for x in self.blocks]
 
+		global errors
+
 		# spawn new block cluster !!!! IC-CUE event !!!!
 		if rospy.Time.now() > self.next_block_time and not self.end and self.flag_new_cluster:
 			Event.duration = rospy.Time.now() - self.start_event_time
 			self.start_event_time = rospy.Time.now()
 			print(Event.duration.to_sec())
+			print(errors)
+			if self.cluster_id_source == 1:
+				self.log.log_file.write('%d	%f	%d\n' % (Event.begin, Event.duration.to_sec(), errors))
+			else:
+				self.log.log_file.write('%d	%f	%d\n' % (Event.incphase, Event.duration.to_sec(), errors))
+			errors = 0
 			print("IC-CUE 600")
 			################################
 			self.event.rosidm.header.stamp    = rospy.Time.now()
@@ -223,8 +259,11 @@ class Game:
 		# update game elements
 		for block in self.blocks:
 			block.update()
+		for block in self.blocks_red:
+			block.update()
 		# erase blocks who left the screen
-		self.blocks = [x for x in self.blocks if x.pos[0] > -block.size[0]] # why not 0 ??? # -100
+		self.blocks = [x for x in self.blocks if x.pos[0] > -block.size[0]]
+		self.blocks_red = [x for x in self.blocks_red if x.pos[0] > -block.size[0]]
 		block_ids = [x.id for x in self.blocks]
 		
 		if len(self.blocks) > 0:
@@ -237,6 +276,9 @@ class Game:
 				Event.duration = rospy.Time.now() - self.start_event_time
 				self.start_event_time = rospy.Time.now()
 				print(Event.duration.to_sec())
+				print(errors)
+				self.log.log_file.write('%d	%f	%d\n' % (Event.iccue, Event.duration.to_sec(), errors))
+				errors = 0
 				print("IC-PHASE 601")
 				################################
 				self.event.rosidm.header.stamp    = rospy.Time.now()
@@ -251,6 +293,9 @@ class Game:
 				Event.duration = rospy.Time.now() - self.start_event_time
 				self.start_event_time = rospy.Time.now()
 				print(Event.duration.to_sec())
+				print(errors)
+				self.log.log_file.write('%d	%f	%d\n' % (Event.icphase, Event.duration.to_sec(), errors))
+				errors = 0
 				print("INC-CUE 602")
 				################################
 				self.event.rosidm.header.stamp    = rospy.Time.now()
@@ -266,6 +311,9 @@ class Game:
 				Event.duration = rospy.Time.now() - self.start_event_time
 				self.start_event_time = rospy.Time.now()
 				print(Event.duration.to_sec())
+				print(errors)
+				self.log.log_file.write('%d	%f	%d\n' % (Event.inccue, Event.duration.to_sec(), errors))
+				errors = 0
 				print("INC-PHASE 603")
 				################################
 				self.event.rosidm.header.stamp    = rospy.Time.now()
@@ -285,8 +333,9 @@ class Game:
 
 			# show a red block when the player shoots even there is no block
 			if bullet.gone() and not bullet.hit:
-				self.blocks.append(Block((self.width / 2 - 1, 30), id=-1))
-				self.blocks[-1].set_color((0, 0, 255))
+				self.blocks_red.append(Block((self.width / 2 - 1, 30), id=-1))
+				self.blocks_red[-1].set_color((0, 0, 255))
+				errors += 1
 		self.bullets = [x for x in self.bullets if not x.gone()]
 
 		# key input
@@ -302,18 +351,36 @@ class Game:
 
 	# message callback to receive input signals
 	def callback(self, msg):
-		self.input = True
-		
+		if msg.command:
+			self.input = True
+
+# LOG
+class Log:
+	def __init__(self):
+		rospack = rospkg.RosPack()
+		dir_path = rospack.get_path('carnival')
+		log_path = '/logs/log-'
+		dt = datetime.datetime.now()
+		date=datetime.date(dt.year, dt.month, dt.day)
+		path = dir_path + log_path + date.strftime('%Y-%m-%d')
+		if not os.path.exists(path):
+			os.mkdir(path)
+		log_file_path = path + '/log-' + dt.strftime('%Y-%m-%d_%H%M%S') + '.txt'
+		self.log_file = open(log_file_path, 'w')
 
 
 # entry point
 def main():
+
+	log = Log()
 	event = Event()
 	event.talker()
 	rospy.init_node('carnival')
 
-	game = Game(event)
-	sub = rospy.Subscriber('/shoot', Empty, game.callback)
+	log.log_file.write('PHASE	DURATION	#ERRORS\n')
+
+	game = Game(event, log)
+	sub = rospy.Subscriber('/myo_emg/command', Command, game.callback)
 
 	game.draw()
 	game.start_event_time = rospy.Time.now()	
@@ -329,6 +396,8 @@ def main():
 		game.draw()
 		game.update()
 
+	print("CLOSE")
+	log.log_file.close()
 
 if __name__ == '__main__':
 	main()
