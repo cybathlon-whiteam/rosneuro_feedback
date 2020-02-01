@@ -7,15 +7,24 @@ import random
 import math
 import numpy
 import smr_utilities
-from rosneuro_msgs.msg import NeuroEvent
+from rosneuro_msgs.msg import NeuroEvent, NeuroOutput
 from draw.GUI import SMRGUI
 
 
-class SmrOffline(object):
+class SmrOnline(object):
 	def __init__(self):
 
 		##### Configure publisher #####
 		self.event_pub = rospy.Publisher("/events/bus", NeuroEvent, queue_size=1000)
+
+		##### Configure subscriber #####
+		rospy.Subscriber("/classifier/output", NeuroOutput, self.receive_probabilities)
+
+		##### Initialize probabilities #####
+		self.values = numpy.zeros(rospy.get_param('~n_classes'))
+
+	def receive_probabilities(msg):
+		self.values = msg.softpredict.data
 
 	def run(self):
 		
@@ -48,21 +57,31 @@ class SmrOffline(object):
 			publish_neuro_event(self.event_pub, CLASS_EVENTS[idx]+OFF)
 
 			##### Continuous feedback #####
-			Period = random.randrange(rospy.get_param('~timings_feedback_min'), rospy.get_param('~timings_feedback_max'))
-			F = 1.0/(4.0 * Period);
+			self.values = numpy.zeros(rospy.get_param('~n_classes'))
+			hit = False
 
-			t = 0
 			publish_neuro_event(self.event_pub, CFEEDBACK)
-			while t < Period:
-				value = math.sin(2.0*math.pi*t*F)
-				gui.set_value_bars(value, idx)
-				t = t + rospy.get_param('~timings_feedback_update')
+			while not hit:
+				for c in range(n_classes):
+					value = normalize_probabilities(self.values[c], rospy.get_param('~threshold'), 1/rospy.get_param('~n_classes'))
+					gui.set_value_bars(value, c)
+					if value >= 1.0: 
+						hit = True
+						break
 				if check_exit(cv2.waitKey(rospy.get_param('~timings_feedback_update'))): exit=True
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####
-			gui.set_alpha_bars(0.8, idx)
-			if check_exit(cv2.waitKey(rospy.get_param('~timings_boom'))): exit=True
+			gui.set_alpha_bars(0.8, c)
+			cv2.waitKey(100)
+			if c == idx:
+				publish_neuro_event(self.event_pub, TARGETHIT)
+				if check_exit(cv2.waitKey(rospy.get_param('~timings_boom'))): exit=True
+				publish_neuro_event(self.event_pub, TARGETHIT+OFF)
+			else:
+				publish_neuro_event(self.event_pub, TARGETMISS)
+				if check_exit(cv2.waitKey(rospy.get_param('~timings_boom'))): exit=True
+				publish_neuro_event(self.event_pub, TARGETMISS+OFF)
 			gui.reset_bars()
 			gui.remove_cue()
 

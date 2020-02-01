@@ -12,6 +12,8 @@
     <param name="~n_classes" value="2"/>
     <param name="~n_trials" value="15"/>
 
+    <param name="~threshold" value="0.7"/>
+
     <param name="~timings_begin" value="3000"/>
     <param name="~timings_fixation" value="3000"/>
     <param name="~timings_cue" value="1000"/>

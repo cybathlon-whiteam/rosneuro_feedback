@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rosneuro_feedback import SmrOffline
+from rosneuro_feedback import SmrOffline, SmrOnline
 import sys
 import rospy
 import rospkg
@@ -22,8 +22,7 @@ def main():
 	if mode is 'offline':
 		o = SmrOffline()
 	elif mode is 'online':
-		print('[rosneuro_feedback] TODO')
-		return
+		o = SmrOnline()
 	else:
 		print('[rosneuro_feedback] Unexpected protocol mode')
 		return
