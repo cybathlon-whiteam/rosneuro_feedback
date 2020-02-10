@@ -11,7 +11,7 @@ BAR_COLOR_VERY_RIGHT = (0,128,0)
 
 # Bar class
 class Bar:
-	def __init__(self,window,idx):
+	def __init__(self,window,idx,name=None):
 		self.bar_width = numpy.int32(window.width/8)
 		self.bar_height = numpy.int32(window.height/4)
 		bar_height_start = self.bar_height
@@ -68,4 +68,7 @@ class Bar:
 		tmp = cv2.rectangle(tmp,bar_fill_start,self.bar_stop,self.color,-1) # Fill feedback bars
 		cv2.addWeighted(tmp, self.alpha, canvas, 1 - self.alpha, 0, canvas)
 		canvas = cv2.rectangle(canvas,self.bar_start,self.bar_stop,(255,255,255),BAR_THICK) # Draw feedback bars
+		canvas = cv2.putText(canvas, self.name, (self.bar_stop[0] - self.bar_width,
+                                                 self.bar_stop[1] + numpy.int32(self.bar_stop[1] / 8)),
+                             20, 1, (255, 255, 255), 2, cv2.LINE_AA)    # Add text
 		return canvas
