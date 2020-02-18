@@ -30,8 +30,8 @@ def publish_neuro_event(pub,event):
 
 def normalize_probabilities(value,max,min):
 	nvalue = ((1.0 - 0.0) * (value - min))/(max - min) + 0.0
-	nvalue = 1.0 if nvalue >= 1.0 else nvalue = nvalue
-	nvalue = 0.0 if nvalue <= 0.0 else nvalue = nvalue
+	nvalue = 1.0 if nvalue >= 1.0 else nvalue
+	nvalue = 0.0 if nvalue <= 0.0 else nvalue
 	return nvalue
 
 def check_boom(values):
