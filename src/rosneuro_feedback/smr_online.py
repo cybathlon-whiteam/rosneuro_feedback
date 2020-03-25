@@ -1,15 +1,6 @@
 #!/usr/bin/python
-import cv2
-import rospy
-import rospkg
-import os
-import random
-import math
-import numpy
-import smr_utilities
-from rosneuro_msgs.msg import NeuroEvent, NeuroOutput
-from draw.GUI import SMRGUI
 
+from smr_utilities import *
 
 class SmrOnline(object):
 	def __init__(self):
@@ -18,13 +9,23 @@ class SmrOnline(object):
 		self.event_pub = rospy.Publisher("/events/bus", NeuroEvent, queue_size=1000)
 
 		##### Configure subscriber #####
-		rospy.Subscriber("/classifier/output", NeuroOutput, self.receive_probabilities)
+		rospy.Subscriber("/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
 
 		##### Initialize probabilities #####
 		self.values = numpy.zeros(rospy.get_param('~n_classes'))
 
 	def receive_probabilities(msg):
 		self.values = msg.softpredict.data
+
+	def reset_bci(self):
+		rospy.wait_for_service('/smrbci/reset')
+    		try:
+			rospy.ServiceProxy('/smrbci/reset', Empty)
+			return True
+   		except rospy.ServiceException, e:
+        		print "Service call failed: %s"
+			return False
+
 
 	def run(self):
 		
@@ -42,7 +43,6 @@ class SmrOnline(object):
 		exit = False
 		for i,idx in enumerate(sequence):
 			print("Trial " + str(i+1) + "/" + str(len(sequence)) + " [" + CLASSES[idx] + "]")
-
 			##### Fixation #####
 			publish_neuro_event(self.event_pub, FIXATION)
 			gui.add_fixation()
@@ -60,8 +60,10 @@ class SmrOnline(object):
 			self.values = numpy.zeros(rospy.get_param('~n_classes'))
 			hit = False
 
+			self.reset_bci()
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 			while not hit:
+				rospy.spin()
 				for c in range(n_classes):
 					value = normalize_probabilities(self.values[c], rospy.get_param('~threshold'), 1/rospy.get_param('~n_classes'))
 					gui.set_value_bars(value, c)

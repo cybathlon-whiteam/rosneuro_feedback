@@ -6,10 +6,9 @@ import os
 import random
 import math
 import numpy
-#import smr_utilities
-from rosneuro_msgs.msg import NeuroEvent
+from rosneuro_msgs.msg import NeuroEvent, NeuroOutput
+from std_srvs.srv import Empty
 from draw.GUI import SMRGUI
-
 
 
 # TODO: Export to rosneuro_events.yaml
