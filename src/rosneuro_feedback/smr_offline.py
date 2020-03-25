@@ -20,7 +20,7 @@ class SmrOffline(object):
 	def run(self):
 		
 		##### Configure protocol #####
-		sequence = config_trials(rospy.get_param('~n_classes'),rospy.get_param('~n_trials'))
+		sequence = smr_utilities.config_trials(rospy.get_param('~n_classes'),rospy.get_param('~n_trials'))
 
 		##### Configure GUI engine #####
 		gui = SMRGUI(rospy.get_param('~window_height'),rospy.get_param('~window_width'),rospy.get_param('~window_scale'))

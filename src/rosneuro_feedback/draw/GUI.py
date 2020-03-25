@@ -22,13 +22,13 @@ class SMRGUI:
 		self.canvas = numpy.zeros((self.window.height, self.window.width, 3), numpy.uint8)
 
 	def init_bars(self, num_classes, class_names=None):
-        del self.bars[:]
-        if class_names is not None:
-            for i in range(num_classes):
-                self.bars.append(Bar(self.window, i, class_names[i]))
-        else:
-            for i in range(num_classes):
-                self.bars.append(Bar(self.window, i))
+        	del self.bars[:] #TO CHECK Python 2 vs Python 3
+       		if class_names is not None:
+        		for i in range(num_classes):
+                		self.bars.append(Bar(self.window, i, class_names[i]))
+        	else:
+            		for i in range(num_classes):
+                		self.bars.append(Bar(self.window, i))
 
 	def set_value_bars(self,value,idx):
 		self.bars[idx].set_value(value)
