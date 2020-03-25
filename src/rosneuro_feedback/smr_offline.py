@@ -1,15 +1,6 @@
 #!/usr/bin/python
-import cv2
-import rospy
-import rospkg
-import os
-import random
-import math
-import numpy
-import smr_utilities
-from rosneuro_msgs.msg import NeuroEvent
-from draw.GUI import SMRGUI
 
+from smr_utilities import *
 
 class SmrOffline(object):
 	def __init__(self):
@@ -20,7 +11,7 @@ class SmrOffline(object):
 	def run(self):
 		
 		##### Configure protocol #####
-		sequence = smr_utilities.config_trials(rospy.get_param('~n_classes'),rospy.get_param('~n_trials'))
+		sequence = config_trials(rospy.get_param('~n_classes'),rospy.get_param('~n_trials'))
 
 		##### Configure GUI engine #####
 		gui = SMRGUI(rospy.get_param('~window_height'),rospy.get_param('~window_width'),rospy.get_param('~window_scale'))
@@ -49,7 +40,7 @@ class SmrOffline(object):
 
 			##### Continuous feedback #####
 			Period = random.randrange(rospy.get_param('~timings_feedback_min'), rospy.get_param('~timings_feedback_max'))
-			F = 1.0/(4.0 * Period);
+			F = 1.0/(4.0 * Period)
 
 			t = 0
 			publish_neuro_event(self.event_pub, CFEEDBACK)

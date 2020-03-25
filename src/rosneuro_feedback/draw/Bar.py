@@ -45,6 +45,7 @@ class Bar:
 
 		self.alpha = 0.5
 		self.value = 0.0
+		self.name = name
 
 	def bar_type(self,i):
 		switcher={
