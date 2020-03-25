@@ -1,11 +1,10 @@
 #!/usr/bin/python
 import cv2
-import numpy
+import numpy 
 from Window import Window
 from Bar import Bar
 from Cue import Cue
 from Fixation import Fixation
-
 
 # SMRGUI class
 class SMRGUI:
@@ -72,4 +71,5 @@ class SMRGUI:
 			self.canvas = fixation.draw(self.canvas)
 
 		canvas = cv2.resize(self.canvas, (self.window.width * self.window.scale, self.window.height * self.window.scale))
+		
 		cv2.imshow('canvas', canvas)

@@ -3,9 +3,9 @@
   <arg name="protocol" default='0'/>
     
   <node name="smr_feedback" pkg="rosneuro_feedback" type="feedback.py" output="screen">
-    <param name="~window_height" value="768"/>
-    <param name="~window_width" value="1024"/>
-    <param name="~window_scale" value="10"/>
+    <param name="~window_height" value="384"/>
+    <param name="~window_width" value="512"/>
+    <param name="~window_scale" value="2"/>
 
     <param name="~protocol_mode" value="$(arg protocol)"/>
 
