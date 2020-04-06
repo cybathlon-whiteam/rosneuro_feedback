@@ -9,10 +9,21 @@ class SmrOnline(object):
 		self.event_pub = rospy.Publisher("/events/bus", NeuroEvent, queue_size=1000)
 
 		##### Configure subscriber #####
-		rospy.Subscriber("/smrbci/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
+		#rospy.Subscriber("/smrbci/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
 
-		##### Initialize probabilities #####
-		self.values = numpy.zeros(rospy.get_param('~n_classes'))
+		##### Configure protocol #####
+		self.n_classes = rospy.get_param('~n_classes')
+		self.n_trials = rospy.get_param('~n_trials')
+		self.threshold = rospy.get_param('~threshold')
+		self.values = numpy.zeros(self.n_classes)
+
+		self.timings_begin = rospy.get_param('~timings_begin')
+		self.timings_fixation = rospy.get_param('~timings_fixation')
+		self.timings_cue = rospy.get_param('~timings_cue')
+		self.timings_feedback_update = rospy.get_param('~timings_feedback_update')
+		self.timings_boom = rospy.get_param('~timings_boom')
+		self.timings_iti = rospy.get_param('~timings_iti')
+		self.timings_end = rospy.get_param('~timings_end')
 
 	def receive_probabilities(self, msg):
 		self.values = msg.softpredict.data
@@ -27,20 +38,18 @@ class SmrOnline(object):
         		print "Service call failed: %s"
 			return False
 
-
 	def run(self):
 		
 		##### Configure protocol #####
-		n_classes = rospy.get_param('~n_classes')
-		sequence = config_trials(n_classes, rospy.get_param('~n_trials'))
+		sequence = config_trials(self.n_classes, self.n_trials)
 
 		##### Configure GUI engine #####
 		gui = SMRGUI(rospy.get_param('~window_height'),rospy.get_param('~window_width'),rospy.get_param('~window_scale'))
-		gui.init_bars(n_classes)
+		gui.init_bars(self.n_classes)
 		gui.draw()
 
 		print("[smr2class] Protocol starts")
-		cv2.waitKey(rospy.get_param('~timings_begin'))
+		cv2.waitKey(self.timings_begin)
 
 		exit = False
 		for i,idx in enumerate(sequence):
@@ -48,32 +57,32 @@ class SmrOnline(object):
 			##### Fixation #####
 			publish_neuro_event(self.event_pub, FIXATION)
 			gui.add_fixation()
-			cv2.waitKey(rospy.get_param('~timings_fixation'))
+			cv2.waitKey(self.timings_fixation)
 			publish_neuro_event(self.event_pub, FIXATION+OFF)
 			gui.remove_fixation()
 
 			##### Cue #####
 			publish_neuro_event(self.event_pub,CLASS_EVENTS[idx])
 			gui.add_cue(idx)
-			cv2.waitKey(rospy.get_param('~timings_cue'))
+			cv2.waitKey(self.timings_cue)
 			publish_neuro_event(self.event_pub, CLASS_EVENTS[idx]+OFF)
 
 			##### Continuous feedback #####
-			self.values = numpy.zeros(n_classes)
+			self.values = numpy.zeros(self.n_classes)
 			hit = False
 			self.reset_bci()
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
 				#rospy.spin()
-				
-				for c in range(n_classes):
-					value = normalize_probabilities(self.values[c], rospy.get_param('~threshold'), 1/n_classes)
+
+				for c in range(self.n_classes):
+					value = normalize_probabilities(self.values[c], self.threshold, 1/float(self.n_classes))
 					gui.set_value_bars(value, c)
 					if value >= 1.0: 
 						hit = True
 						break
-				if check_exit(cv2.waitKey(rospy.get_param('~timings_feedback_update'))): exit=True
+				if check_exit(cv2.waitKey(self.timings_feedback_update)): exit=True
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####
@@ -81,19 +90,19 @@ class SmrOnline(object):
 			cv2.waitKey(100)
 			if c == idx:
 				publish_neuro_event(self.event_pub, TARGETHIT)
-				if check_exit(cv2.waitKey(rospy.get_param('~timings_boom'))): exit=True
+				if check_exit(cv2.waitKey(self.timings_boom)): exit=True
 				publish_neuro_event(self.event_pub, TARGETHIT+OFF)
 			else:
 				publish_neuro_event(self.event_pub, TARGETMISS)
-				if check_exit(cv2.waitKey(rospy.get_param('~timings_boom'))): exit=True
+				if check_exit(cv2.waitKey(self.timings_boom)): exit=True
 				publish_neuro_event(self.event_pub, TARGETMISS+OFF)
 			gui.reset_bars()
 			gui.remove_cue()
 
-			if check_exit(cv2.waitKey(rospy.get_param('~timings_iti'))): exit=True
+			if check_exit(cv2.waitKey(self.timings_iti)): exit=True
 			if exit:
 				print("User asked to quit")
 				break
 
 		print("[smr2class] Protocol ends")
-		cv2.waitKey(rospy.get_param('~timings_end'))
+		cv2.waitKey(self.timings_end)
