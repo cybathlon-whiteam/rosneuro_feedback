@@ -9,7 +9,7 @@ class SmrOnline(object):
 		self.event_pub = rospy.Publisher("/events/bus", NeuroEvent, queue_size=1000)
 
 		##### Configure subscriber #####
-		#rospy.Subscriber("/smrbci/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
+		rospy.Subscriber("/integrator/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
 
 		##### Configure protocol #####
 		self.n_classes = rospy.get_param('~n_classes')
@@ -29,8 +29,8 @@ class SmrOnline(object):
 		self.values = msg.softpredict.data
 
 	def reset_bci(self):
-		rospy.wait_for_service('/smrbci/reset')
-		resbci = rospy.ServiceProxy('/smrbci/reset', Empty)
+		rospy.wait_for_service('/integrator/reset')
+		resbci = rospy.ServiceProxy('/integrator/reset', Empty)
     		try:
 			resbci()
 			return True
@@ -71,11 +71,11 @@ class SmrOnline(object):
 			self.values = numpy.zeros(self.n_classes)
 			hit = False
 			self.reset_bci()
+			rospy.sleep(0.050)
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
 				#rospy.spin()
-
 				for c in range(self.n_classes):
 					value = normalize_probabilities(self.values[c], self.threshold, 1/float(self.n_classes))
 					gui.set_value_bars(value, c)
