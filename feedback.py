@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rosneuro_feedback import SmrOffline, SmrOnline
+from rosneuro_feedback import SmrOffline, SmrOnline, SmrControl
 import sys
 import rospy
 import rospkg
@@ -9,7 +9,8 @@ import os
 def get_mode(idx):
 	modality={
 			0:'offline',
-			1:'online'
+			1:'online',
+			2:'control'
 		}
 	return modality.get(idx,"Unexpected protocol index")
 
@@ -23,6 +24,8 @@ def main():
 		o = SmrOffline()
 	elif mode is 'online':
 		o = SmrOnline()
+	elif mode is 'control':
+		o = SmrControl()
 	else:
 		print('[rosneuro_feedback] Unexpected protocol mode')
 		return

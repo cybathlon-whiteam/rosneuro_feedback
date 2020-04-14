@@ -44,14 +44,14 @@ class SmrOffline(object):
 			##### Fixation #####
 			publish_neuro_event(self.event_pub, FIXATION)
 			gui.add_fixation()
-			cv2.waitKey(self.timings_fixation)
+			if check_exit(cv2.waitKey(self.timings_fixation)): exit=True
 			publish_neuro_event(self.event_pub, FIXATION+OFF)
 			gui.remove_fixation()
 
 			##### Cue #####
 			publish_neuro_event(self.event_pub,CLASS_EVENTS[idx])
 			gui.add_cue(idx)
-			cv2.waitKey(self.timings_cue)
+			if check_exit(cv2.waitKey(self.timings_cue)): exit=True
 			publish_neuro_event(self.event_pub, CLASS_EVENTS[idx]+OFF)
 
 			##### Continuous feedback #####
