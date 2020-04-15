@@ -70,14 +70,7 @@ class SmrControl(object):
 			##### Boom #####
 			gui.set_alpha_bars(0.8, c)
 			cv2.waitKey(100)
-			if c == idx:
-				publish_neuro_event(self.event_pub, TARGETHIT)
-				if check_exit(cv2.waitKey(self.timings_boom)): exit=True
-				publish_neuro_event(self.event_pub, TARGETHIT+OFF)
-			else:
-				publish_neuro_event(self.event_pub, TARGETMISS)
-				if check_exit(cv2.waitKey(self.timings_boom)): exit=True
-				publish_neuro_event(self.event_pub, TARGETMISS+OFF)
+			if check_exit(cv2.waitKey(self.timings_boom)): exit=True
 			gui.reset_bars()
 			gui.remove_cue()
 
