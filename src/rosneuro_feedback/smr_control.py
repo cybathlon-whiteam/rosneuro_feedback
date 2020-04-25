@@ -9,7 +9,7 @@ class SmrControl(object):
 		self.event_pub = rospy.Publisher("/events/bus", NeuroEvent, queue_size=1000)
 
 		##### Configure subscriber #####
-		rospy.Subscriber("/integrator/integrated_neuroprediction", NeuroOutput, self.receive_probabilities)
+		rospy.Subscriber("/integrator/neuroprediction", NeuroOutput, self.receive_probabilities)
 
 		##### Configure protocol #####
 		self.n_classes = rospy.get_param('~n_classes')
