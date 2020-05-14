@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rosneuro_feedback import SmrOffline, SmrOnline, SmrControl
+from rosneuro_feedback import SmrCalibration, SmrEvaluation, SmrControl
 import sys
 import rospy
 import rospkg
@@ -8,8 +8,8 @@ import os
 
 def get_mode(idx):
 	modality={
-			0:'offline',
-			1:'online',
+			0:'calibration',
+			1:'evaluation',
 			2:'control'
 		}
 	return modality.get(idx,"Unexpected protocol index")
@@ -20,10 +20,10 @@ def main():
 	rospy.init_node('rosneuro_feedback')
 	mode = get_mode(rospy.get_param('~protocol_mode'))
 
-	if mode is 'offline':
-		o = SmrOffline()
-	elif mode is 'online':
-		o = SmrOnline()
+	if mode is 'calibration':
+		o = SmrCalibration()
+	elif mode is 'evaluation':
+		o = SmrEvaluation()
 	elif mode is 'control':
 		o = SmrControl()
 	else:

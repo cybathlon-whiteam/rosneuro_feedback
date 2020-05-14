@@ -1,3 +1,3 @@
-from smr_offline import SmrOffline
-from smr_online import SmrOnline
+from smr_calibration import SmrCalibration
+from smr_evaluation import SmrEvaluation
 from smr_control import SmrControl
