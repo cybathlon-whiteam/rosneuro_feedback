@@ -11,7 +11,6 @@ class SmrCalibration(object):
 		##### Configure protocol #####
 		self.n_classes = rospy.get_param('~n_classes')
 		self.n_trials = rospy.get_param('~n_trials')
-		self.threshold = rospy.get_param('~threshold')
 		self.values = numpy.zeros(self.n_classes)
 
 		self.timings_begin = rospy.get_param('~timings_begin')

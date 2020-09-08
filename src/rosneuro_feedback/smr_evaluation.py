@@ -71,7 +71,7 @@ class SmrEvaluation(object):
 			self.values = numpy.zeros(self.n_classes)
 			hit = False
 			self.reset_bci()
-			rospy.sleep(0.050)
+			rospy.sleep(0.150)
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:

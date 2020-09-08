@@ -16,6 +16,7 @@ class SmrControl(object):
 		self.n_trials = rospy.get_param('~n_trials')
 		self.threshold = rospy.get_param('~threshold')
 		self.values = numpy.zeros(self.n_classes)
+		self.rec_prob = numpy.zeros(self.n_classes)
 
 		self.timings_begin = rospy.get_param('~timings_begin')
 		self.timings_fixation = rospy.get_param('~timings_fixation')
@@ -50,27 +51,29 @@ class SmrControl(object):
 		exit = False
 		while not exit:
 			##### Continuous feedback #####
-			self.values = numpy.zeros(self.n_classes)
+			self.rec_prob = numpy.zeros(self.n_classes)
 			hit = False
 			self.reset_bci()
-			rospy.sleep(0.050)
+			rospy.sleep(0.150)
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
 				#rospy.spin()
-				for c in range(self.n_classes):
-					value = normalize_probabilities(self.values[c], self.threshold, 1/float(self.n_classes))
-					gui.set_value_bars(value, c)
-					if value >= 1.0: 
-						hit = True
-						break
+				if abs(self.values[0] - self.rec_prob[0]) > 0.00001:
+					self.rec_prob = self.values
+
+					for c in range(self.n_classes):
+						value = normalize_probabilities(self.rec_prob[c], self.threshold, 1/float(self.n_classes))
+						gui.set_value_bars(value, c)
+						if value >= 1.0: 
+							hit = True
+							break
 				if check_exit(cv2.waitKey(self.timings_feedback_update)): exit=True
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####
 			gui.set_alpha_bars(0.8, c)
-			cv2.waitKey(100)
-			if check_exit(cv2.waitKey(self.timings_boom)): exit=True
+			cv2.waitKey(50)
 			gui.reset_bars()
 			gui.remove_cue()
 
