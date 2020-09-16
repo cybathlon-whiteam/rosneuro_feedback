@@ -10,11 +10,17 @@ class SmrControl(object):
 
 		##### Configure subscriber #####
 		rospy.Subscriber("/integrator/neuroprediction", NeuroOutput, self.receive_probabilities)
+		rospy.Subscriber("/events/bus", NeuroEvent, self.check_eog)
 
 		##### Configure protocol #####
 		self.n_classes = rospy.get_param('~n_classes')
 		self.n_trials = rospy.get_param('~n_trials')
-		self.threshold = rospy.get_param('~threshold')
+		str_thr = rospy.get_param('~threshold')
+		list_thr = str_thr.split(",")
+		self.threshold = []
+		for i in list_thr:
+			self.threshold.append(float(i))
+			
 		self.values = numpy.zeros(self.n_classes)
 		self.rec_prob = numpy.zeros(self.n_classes)
 
@@ -27,6 +33,15 @@ class SmrControl(object):
 
 	def receive_probabilities(self, msg):
 		self.values = msg.softpredict.data
+
+	def check_eog(self, msg):
+		self.idevt = msg.event
+
+		if self.idevt == 1024:	# EOG detected
+			gui.add_cue(5)
+		elif self.idevt == 33792:	# EOG timeout elapsed
+			gui.remove_cue() 
+
 
 	def reset_bci(self):
 		rospy.wait_for_service('/integrator/reset')
@@ -63,7 +78,7 @@ class SmrControl(object):
 					self.rec_prob = self.values
 
 					for c in range(self.n_classes):
-						value = normalize_probabilities(self.rec_prob[c], self.threshold, 1/float(self.n_classes))
+						value = normalize_probabilities(self.rec_prob[c], self.threshold[c], 1/float(self.n_classes))
 						gui.set_value_bars(value, c)
 						if value >= 1.0: 
 							hit = True
@@ -75,7 +90,6 @@ class SmrControl(object):
 			gui.set_alpha_bars(0.8, c)
 			cv2.waitKey(50)
 			gui.reset_bars()
-			gui.remove_cue()
 
 			if exit:
 				print("User asked to quit")

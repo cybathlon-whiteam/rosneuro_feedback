@@ -7,6 +7,7 @@ CUE_COLOR_RIGHT = (50,205,50)
 CUE_COLOR_CENTER = (255,140,0)
 CUE_COLOR_VERY_LEFT = (75,0,130)
 CUE_COLOR_VERY_RIGHT = (0,128,0)
+CUE_COLOR_EOG = (150,0,0)
 
 # Cue class
 class Cue:
@@ -21,7 +22,8 @@ class Cue:
 			1:'right',
 			2:'center',
 			3:'very-left',
-			4:'very-right'
+			4:'very-right',
+			5:'eog'
 		}
 		return switcher.get(i,"Invalid cue number")
 
@@ -36,6 +38,8 @@ class Cue:
 			color = CUE_COLOR_VERY_LEFT
 		elif self.type is 'very-right':
 			color = CUE_COLOR_VERY_RIGHT
+		elif self.type is 'eog':
+			color = CUE_COLOR_EOG
 		else:
 			print("Invalid cue type")
 			color = (0,0,0)
