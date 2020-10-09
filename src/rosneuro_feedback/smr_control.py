@@ -23,6 +23,7 @@ class SmrControl(object):
 			
 		self.values = numpy.zeros(self.n_classes)
 		self.rec_prob = numpy.zeros(self.n_classes)
+		self.eog_detected = False
 
 		self.timings_begin = rospy.get_param('~timings_begin')
 		self.timings_fixation = rospy.get_param('~timings_fixation')
@@ -37,10 +38,10 @@ class SmrControl(object):
 	def check_eog(self, msg):
 		self.idevt = msg.event
 
-		if self.idevt == 1024:	# EOG detected
-			gui.add_cue(5)
-		elif self.idevt == 33792:	# EOG timeout elapsed
-			gui.remove_cue() 
+		if self.idevt == EOG:	# EOG detected
+			self.eog_detected = True
+		elif self.idevt == EOG+OFF:	# EOG timeout elapsed
+			self.eog_detected = False
 
 
 	def reset_bci(self):
@@ -65,6 +66,12 @@ class SmrControl(object):
 
 		exit = False
 		while not exit:
+			##### Check EOG #####
+			if self.eog_detected is True:
+				gui.add_cue(5)
+			else:
+				gui.remove_cue()
+
 			##### Continuous feedback #####
 			self.rec_prob = numpy.zeros(self.n_classes)
 			hit = False

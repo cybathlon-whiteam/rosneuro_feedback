@@ -18,6 +18,7 @@ CFEEDBACK = 781
 CLASS_EVENTS = [773, 771]
 TARGETHIT = 897
 TARGETMISS = 898
+EOG = 1024
 
 # TODO: Export to smr_protocol.yaml
 CLASSES = ['mi_both_hands', 'mi_both_feet']
