@@ -66,11 +66,6 @@ class SmrControl(object):
 
 		exit = False
 		while not exit:
-			##### Check EOG #####
-			if self.eog_detected is True:
-				gui.add_cue(5)
-			else:
-				gui.remove_cue()
 
 			##### Continuous feedback #####
 			self.rec_prob = numpy.zeros(self.n_classes)
@@ -81,6 +76,13 @@ class SmrControl(object):
 
 			while not hit:
 				#rospy.spin()
+
+				##### Check EOG #####
+				if self.eog_detected is True:
+					gui.add_cue(5)
+				else:
+					gui.remove_cue()
+
 				if abs(self.values[0] - self.rec_prob[0]) > 0.00001:
 					self.rec_prob = self.values
 
