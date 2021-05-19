@@ -81,6 +81,8 @@ class SmrEvaluation(object):
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
+				start_t = time.time()
+
 				#rospy.spin()
 				if abs(self.values[0] - self.rec_prob[0]) > 0.00001:
 					self.rec_prob = self.values
@@ -91,7 +93,14 @@ class SmrEvaluation(object):
 						if value >= 1.0: 
 							hit = True
 							break
-				if check_exit(cv2.waitKey(self.timings_feedback_update)): exit=True
+				
+				wait_t = int(self.timings_feedback_update - (time.time()-start_t)*1000)
+				if wait_t > 0:
+					if check_exit(cv2.waitKey(wait_t)): exit=True
+				else:
+					print('WARNING! The feedback update timing is too low')
+
+
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####

@@ -75,6 +75,7 @@ class SmrControl(object):
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
+				start_t = time.time()
 				#rospy.spin()
 
 				##### Check EOG #####
@@ -92,7 +93,13 @@ class SmrControl(object):
 						if value >= 1.0: 
 							hit = True
 							break
-				if check_exit(cv2.waitKey(self.timings_feedback_update)): exit=True
+				
+				wait_t = int(self.timings_feedback_update - (time.time()-start_t)*1000)
+				if wait_t > 0:
+					if check_exit(cv2.waitKey(wait_t)): exit=True
+				else:
+					print('WARNING! The feedback update timing is too low')
+
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####

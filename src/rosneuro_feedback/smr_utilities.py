@@ -6,6 +6,7 @@ import os
 import random
 import math
 import numpy
+import time
 from rosneuro_msgs.msg import NeuroEvent, NeuroOutput
 from std_srvs.srv import Empty
 from draw.GUI import SMRGUI

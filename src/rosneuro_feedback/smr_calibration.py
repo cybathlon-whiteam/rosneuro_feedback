@@ -60,10 +60,18 @@ class SmrCalibration(object):
 			t = 0
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 			while t < Period:
+				start_t = time.time()
+
 				value = math.sin(2.0*math.pi*t*F)
 				gui.set_value_bars(value, idx)
 				t = t + rospy.get_param('~timings_feedback_update')
-				if check_exit(cv2.waitKey(self.timings_feedback_update)): exit=True
+
+				wait_t = int(self.timings_feedback_update - (time.time()-start_t)*1000)
+				if wait_t > 0:
+					if check_exit(cv2.waitKey(wait_t)): exit=True
+				else:
+					print('WARNING! The feedback update timing is too low')
+
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 
 			##### Boom #####
