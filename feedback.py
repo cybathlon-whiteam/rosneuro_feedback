@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from rosneuro_feedback import SmrCalibration, SmrEvaluation, SmrControl
+from rosneuro_feedback import SmrCalibration, SmrEvaluation, SmrControl, SmrControlContinuous
 import sys
 import rospy
 import rospkg
@@ -11,6 +11,7 @@ def get_mode(idx):
 			0:'calibration',
 			1:'evaluation',
 			2:'control'
+			3:'continuous'
 		}
 	return modality.get(idx,"Unexpected protocol index")
 
@@ -26,6 +27,8 @@ def main():
 		o = SmrEvaluation()
 	elif mode is 'control':
 		o = SmrControl()
+	elif mode is 'continuous':
+		o = SmrControlContinuous()
 	else:
 		print('[rosneuro_feedback] Unexpected protocol mode')
 		return
