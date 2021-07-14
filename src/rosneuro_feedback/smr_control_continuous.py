@@ -90,6 +90,10 @@ class SmrControlContinuous(object):
 				for c in range(self.n_classes):
 					value = normalize_probabilities(self.rec_prob[c], self.threshold[c], 1/float(self.n_classes))
 					gui.set_value_bars(value, c)
+					if value >= 1.0: 
+						gui.set_alpha_bars(0.8, c)
+					else:
+						gui.set_alpha_bars(0.5, c)
 				
 				self.time_checker.make_toc()
 				delay = self.time_checker.check_delay()
