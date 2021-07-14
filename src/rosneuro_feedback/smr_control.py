@@ -32,6 +32,8 @@ class SmrControl(object):
 		self.timings_boom = rospy.get_param('~timings_boom')
 		self.timings_end = rospy.get_param('~timings_end')
 
+		self.time_checker = feedback_timecheck(self.timings_feedback_update)
+
 	def receive_probabilities(self, msg):
 		self.values = msg.softpredict.data
 
@@ -75,8 +77,8 @@ class SmrControl(object):
 			publish_neuro_event(self.event_pub, CFEEDBACK)
 
 			while not hit:
-				start_t = time.time()
 				#rospy.spin()
+				self.time_checker.make_tic()
 
 				##### Check EOG #####
 				if self.eog_detected is True:
@@ -94,11 +96,10 @@ class SmrControl(object):
 							hit = True
 							break
 				
-				wait_t = int(self.timings_feedback_update - (time.time()-start_t)*1000)
-				if wait_t > 0:
-					if check_exit(cv2.waitKey(wait_t)): exit=True
-				else:
-					print('WARNING! The feedback update timing is too low')
+				self.time_checker.make_toc()
+				delay = self.time_checker.check_delay()
+				if delay < 0:
+					if check_exit(cv2.waitKey(-delay)): exit=True
 
 			publish_neuro_event(self.event_pub, CFEEDBACK+OFF)
 

@@ -10,7 +10,7 @@ def get_mode(idx):
 	modality={
 			0:'calibration',
 			1:'evaluation',
-			2:'control'
+			2:'control',
 			3:'continuous'
 		}
 	return modality.get(idx,"Unexpected protocol index")

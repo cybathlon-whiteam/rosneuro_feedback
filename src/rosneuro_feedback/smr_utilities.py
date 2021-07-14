@@ -50,3 +50,23 @@ def normalize_probabilities(value,max,min):
 def check_boom(values):
 	if any(i >= 1.0 for i in values): return True
 	else: return False
+
+class feedback_timecheck:
+	def __init__(self, limit=None):
+		self.tic = 0
+		self.elapsed = 0
+		self.limit = limit
+
+	def make_tic(self):
+		self.tic = time.time()
+
+	def make_toc(self):
+		self.elapsed = (time.time()-self.tic)*1000
+		return self.elapsed
+
+	def check_delay(self):
+		if self.limit != None and self.elapsed > self.limit:
+			print('[feedback_timecheck] WARNING! The feedback update timing is too low (delay ' + str(self.elapsed-self.limit) + ' ms)')
+
+		return int(self.elapsed - self.limit)
+
