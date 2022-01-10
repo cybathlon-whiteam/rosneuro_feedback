@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-from rosneuro_feedback import SmrCalibration, SmrEvaluation, SmrControl, SmrControlContinuous
+from smr_calibration import *
+from smr_evaluation import *
+from smr_control import *
+from smr_control_continuous import *
+
 import sys
 import rospy
 import rospkg
@@ -21,13 +25,13 @@ def main():
 	rospy.init_node('rosneuro_feedback')
 	mode = get_mode(rospy.get_param('~protocol_mode'))
 
-	if mode is 'calibration':
+	if mode == 'calibration':
 		o = SmrCalibration()
-	elif mode is 'evaluation':
+	elif mode == 'evaluation':
 		o = SmrEvaluation()
-	elif mode is 'control':
+	elif mode == 'control':
 		o = SmrControl()
-	elif mode is 'continuous':
+	elif mode == 'continuous':
 		o = SmrControlContinuous()
 	else:
 		print('[rosneuro_feedback] Unexpected protocol mode')

@@ -1,10 +1,10 @@
 #!/usr/bin/python
 import cv2
 import numpy 
-from Window import Window
-from Bar import Bar
-from Cue import Cue
-from Fixation import Fixation
+from draw.Bar import Bar
+from draw.Cue import Cue
+from draw.Fixation import Fixation
+from draw.Window import Window
 
 # SMRGUI class
 class SMRGUI:

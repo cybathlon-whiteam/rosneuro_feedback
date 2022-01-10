@@ -49,11 +49,11 @@ class SmrControl(object):
 	def reset_bci(self):
 		rospy.wait_for_service('/integrator/reset')
 		resbci = rospy.ServiceProxy('/integrator/reset', Empty)
-    		try:
+		try:
 			resbci()
 			return True
-   		except rospy.ServiceException, e:
-        		print "Service call failed: %s"
+		except rospy.ServiceException as e:
+			print("Service call failed: %s")
 			return False
 
 	def run(self):
