@@ -66,7 +66,7 @@ class SmrCalibration(object):
 
 				value = math.sin(2.0*math.pi*t*F)
 				gui.set_value_bars(value, idx)
-				t = t + rospy.get_param('~timings_feedback_update')
+				t = t + self.timings_feedback_update
 
 				self.time_checker.make_toc()
 				delay = self.time_checker.check_delay()
